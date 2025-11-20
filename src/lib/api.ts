@@ -1,8 +1,23 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
+// API Configuration
+// Production: https://nullscape-backend.onrender.com/api/v1
+// Development: http://localhost:4000/api/v1
+// Can be overridden via NEXT_PUBLIC_API_URL environment variable
+const getApiUrl = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  // Auto-detect production environment
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return 'https://nullscape-backend.onrender.com/api/v1';
+  }
+  return 'http://localhost:4000/api/v1';
+};
+
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1',
+  baseURL: getApiUrl(),
 });
 
 api.interceptors.request.use((config) => {
