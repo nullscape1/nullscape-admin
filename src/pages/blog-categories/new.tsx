@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { api } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
 import { addToast } from '../../lib/toast';
 import PageHeader from '../../components/PageHeader';
@@ -8,7 +9,10 @@ import Link from 'next/link';
 
 export default function NewBlogCategory() {
   const router = useRouter();
-  const { call, loading } = useApi();
+  const { call, loading } = useApi(
+    (payload: any) => api.post('/blog-categories', payload),
+    { success: 'Category created', error: 'Failed to create category' }
+  );
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -20,14 +24,10 @@ export default function NewBlogCategory() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await call('/blog-categories', {
-        method: 'POST',
-        data: formData,
-      });
-      addToast('Category created successfully', 'success');
+      await call(formData);
       router.push('/blog-categories');
     } catch (err: any) {
-      addToast(err?.response?.data?.message || 'Failed to create category', 'error');
+      // Error is already handled by useApi hook
     }
   };
 

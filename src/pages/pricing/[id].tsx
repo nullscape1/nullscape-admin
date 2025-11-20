@@ -6,7 +6,6 @@ import PageHeader from '../../components/PageHeader';
 import { ArrowLeft, Plus, X } from 'lucide-react';
 import Link from 'next/link';
 import useSWR from 'swr';
-import { api } from '../../lib/api';
 
 const fetcher = (url: string) => api.get(url).then((r) => r.data);
 

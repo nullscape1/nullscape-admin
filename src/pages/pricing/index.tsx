@@ -19,7 +19,10 @@ export default function PricingPlansList() {
   const [status, setStatus] = useState<string>('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const { call: deletePlan } = useApi();
+  const { call: deletePlan } = useApi(
+    (id: string) => api.delete(`/pricing/${id}`),
+    { success: 'Pricing plan deleted', error: 'Failed to delete pricing plan' }
+  );
 
   const key = useMemo(() => {
     const params = new URLSearchParams();
@@ -35,8 +38,7 @@ export default function PricingPlansList() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this pricing plan?')) return;
     try {
-      await deletePlan(`/pricing/${id}`, { method: 'DELETE' });
-      addToast('Pricing plan deleted successfully', 'success');
+      await deletePlan(id);
       mutate();
     } catch (err: any) {
       addToast(err?.response?.data?.message || 'Failed to delete plan', 'error');

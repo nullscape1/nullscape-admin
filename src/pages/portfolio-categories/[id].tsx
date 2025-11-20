@@ -13,7 +13,10 @@ const fetcher = (url: string) => api.get(url).then((r) => r.data);
 export default function EditPortfolioCategory() {
   const router = useRouter();
   const { id } = router.query;
-  const { call, loading } = useApi();
+  const { call, loading } = useApi(
+    (payload: any) => api.put(`/portfolio-categories/${id}`, payload),
+    { success: 'Category updated', error: 'Failed to update category' }
+  );
   const { data: category, mutate } = useSWR(id ? `/portfolio-categories/${id}` : null, fetcher);
   
   const [formData, setFormData] = useState({
@@ -39,15 +42,11 @@ export default function EditPortfolioCategory() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await call(`/portfolio-categories/${id}`, {
-        method: 'PUT',
-        data: formData,
-      });
-      addToast('Category updated successfully', 'success');
+      await call(formData);
       mutate();
       router.push('/portfolio-categories');
     } catch (err: any) {
-      addToast(err?.response?.data?.message || 'Failed to update category', 'error');
+      // Error is already handled by useApi hook
     }
   };
 
