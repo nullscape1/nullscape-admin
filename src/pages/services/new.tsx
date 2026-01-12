@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { api } from '../../lib/api';
 import { useApi } from '../../lib/useApi';
@@ -8,23 +8,32 @@ import { motion } from 'framer-motion';
 import PageHeader from '../../components/PageHeader';
 import Link from 'next/link';
 import StatusBadge from '../../components/StatusBadge';
+import useSWR from 'swr';
+
+const fetcher = (url: string) => api.get(url).then((r) => r.data);
 
 export default function NewService() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [icon, setIcon] = useState('');
+  const [category, setCategory] = useState('');
+  const [order, setOrder] = useState(0);
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
   const [error, setError] = useState('');
   const { call, loading } = useApi(
     (payload: any) => api.post('/services', payload),
     { success: 'Service created', error: 'Failed to create service' }
   );
+  
+  const { data: categoriesData } = useSWR('/service-categories?status=active&limit=100', fetcher);
+  const categories = categoriesData?.items || [];
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     try {
-      await call({ name, description, status });
+      await call({ name, description, icon, category, order, status });
       addToast('Service created successfully', 'success');
       router.push('/services');
     } catch (err: any) {
@@ -76,6 +85,53 @@ export default function NewService() {
               rows={6}
               className="input w-full resize-none"
               placeholder="Describe your service..."
+            />
+          </div>
+
+          <div>
+            <label htmlFor="icon" className="block text-sm font-semibold mb-3">
+              Icon URL
+            </label>
+            <input
+              id="icon"
+              type="url"
+              value={icon}
+              onChange={(e) => setIcon(e.target.value)}
+              className="input w-full"
+              placeholder="https://example.com/icon.svg"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="category" className="block text-sm font-semibold mb-3">
+              Category
+            </label>
+            <select
+              id="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="input w-full"
+            >
+              <option value="">Select a category</option>
+              {categories.map((cat: any) => (
+                <option key={cat._id} value={cat.name}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="order" className="block text-sm font-semibold mb-3">
+              Display Order
+            </label>
+            <input
+              id="order"
+              type="number"
+              value={order}
+              onChange={(e) => setOrder(parseInt(e.target.value) || 0)}
+              className="input w-full"
+              min="0"
             />
           </div>
 

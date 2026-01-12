@@ -29,6 +29,7 @@ import {
   FolderTree,
   Code,
   DollarSign,
+  Handshake,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -54,6 +55,8 @@ const navigation: NavItem[] = [
   { name: 'Team', href: '/team', icon: Users, group: 'Content' },
   { name: 'Tech Stack', href: '/tech-stack', icon: Code, group: 'Content' },
   { name: 'Pricing Plans', href: '/pricing', icon: DollarSign, group: 'Content' },
+  { name: 'Trusted Partners', href: '/partners', icon: Handshake, group: 'Content' },
+  { name: 'Service Categories', href: '/service-categories', icon: FolderTree, group: 'Content' },
   { name: 'Jobs', href: '/jobs', icon: BriefcaseBusiness, roles: ['Admin', 'SuperAdmin'], group: 'Management' },
   { name: 'Inquiries', href: '/inquiries', icon: Mail, roles: ['Admin', 'SuperAdmin'], group: 'Management' },
   { name: 'Newsletter', href: '/newsletter', icon: Mail, roles: ['Admin', 'SuperAdmin'], group: 'Management' },
