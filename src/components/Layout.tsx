@@ -30,6 +30,8 @@ import {
   Code,
   DollarSign,
   Handshake,
+  Building2,
+  ClipboardList,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -47,6 +49,8 @@ const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, group: 'Main' },
   { name: 'Services', href: '/services', icon: Briefcase, group: 'Content' },
   { name: 'Website CMS (Growth)', href: '/growth-cms/pages', icon: Sparkles, group: 'Content' },
+  { name: 'Industries (CMS)', href: '/growth-cms/industries', icon: Building2, group: 'Content' },
+  { name: 'Case Studies (CMS)', href: '/growth-cms/case-studies', icon: ClipboardList, group: 'Content' },
   { name: 'Legacy CMS', href: '/cms/pages', icon: FileText, group: 'Content' },
   { name: 'Blog', href: '/blog', icon: BookOpen, group: 'Content' },
   { name: 'Blog Categories', href: '/blog-categories', icon: Tag, group: 'Content' },

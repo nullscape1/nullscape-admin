@@ -85,6 +85,8 @@ export default function NewTechStack() {
               <option value="Cloud">Cloud</option>
               <option value="Mobile">Mobile</option>
               <option value="DevOps">DevOps</option>
+              <option value="Ecommerce">Ecommerce</option>
+              <option value="DataAnalytics">Data analytics</option>
               <option value="Other">Other</option>
             </select>
           </div>
