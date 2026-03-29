@@ -1,5 +1,6 @@
 import useSWR from 'swr';
 import { api } from '../../lib/api';
+import { swrFetcher } from '../../lib/swrFetcher';
 import { useMemo, useState } from 'react';
 import Pagination from '../../components/Pagination';
 import { addToast } from '../../lib/toast';
@@ -9,8 +10,6 @@ import PageHeader from '../../components/PageHeader';
 import FilterBar from '../../components/FilterBar';
 import DataTable from '../../components/DataTable';
 import StatusBadge from '../../components/StatusBadge';
-
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
 
 export default function NewsletterList() {
   const [q, setQ] = useState('');
@@ -27,8 +26,24 @@ export default function NewsletterList() {
     return `/newsletter?${params.toString()}`;
   }, [q, status, page, limit]);
 
-  const { data, mutate, isLoading } = useSWR(key, fetcher);
-  const exportUrl = `${api.defaults.baseURL}/newsletter/export/csv`;
+  const { data, mutate, isLoading } = useSWR(key, swrFetcher);
+
+  const handleExportCsv = async () => {
+    try {
+      const { data: blob } = await api.get('/newsletter/export/csv', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'subscribers.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      addToast('Export downloaded', 'success');
+    } catch (err: any) {
+      addToast(err?.response?.data?.message || 'Export failed', 'error');
+    }
+  };
 
   const handleReset = () => {
     setQ('');
@@ -67,9 +82,8 @@ export default function NewsletterList() {
         description="Manage your newsletter subscribers and email list"
         action={{
           label: 'Export CSV',
-          href: exportUrl,
           icon: <Download className="w-4 h-4" />,
-          external: true,
+          onClick: handleExportCsv,
         }}
       />
 

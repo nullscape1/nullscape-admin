@@ -1,40 +1,46 @@
-import useSWR from 'swr';
 import { api } from '../../lib/api';
-import { useMemo, useState } from 'react';
+import { useListCrud } from '../../hooks/useListCrud';
 import Pagination from '../../components/Pagination';
 import { addToast } from '../../lib/toast';
-import { Mail, Download, Eye, CheckCircle, XCircle } from 'lucide-react';
+import { Mail, Download, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PageHeader from '../../components/PageHeader';
 import FilterBar from '../../components/FilterBar';
 import DataTable from '../../components/DataTable';
 import StatusBadge from '../../components/StatusBadge';
 
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
-
 export default function InquiriesList() {
-  const [page, setPage] = useState(1);
-  const [resolved, setResolved] = useState<string>('');
-  const [limit, setLimit] = useState(10);
+  const {
+    data,
+    mutate,
+    isLoading,
+    status: resolved,
+    setStatus: setResolved,
+    page,
+    setPage,
+    limit,
+    setLimit,
+    handleReset,
+    q,
+    setQ,
+  } = useListCrud('/inquiries', { statusParamName: 'resolved' });
 
-  const key = useMemo(() => {
-    const params = new URLSearchParams();
-    if (resolved) params.set('resolved', resolved);
-    params.set('page', String(page));
-    params.set('limit', String(limit));
-    return `/inquiries?${params.toString()}`;
-  }, [resolved, page, limit]);
-
-  const { data, mutate, isLoading } = useSWR(key, fetcher);
-
-  const handleReset = () => {
-    setResolved('');
-    setPage(1);
-    mutate();
-    addToast('Filters cleared', 'success', 1500);
+  const handleExportCsv = async () => {
+    try {
+      const { data } = await api.get('/inquiries/export/csv', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'inquiries.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      addToast('Export downloaded', 'success');
+    } catch (err: any) {
+      addToast(err?.response?.data?.message || 'Export failed', 'error');
+    }
   };
-
-  const exportUrl = `${api.defaults.baseURL}/inquiries/export/csv`;
 
   const columns = [
     {
@@ -102,9 +108,8 @@ export default function InquiriesList() {
         description="Manage customer inquiries and contact forms"
         action={{
           label: 'Export CSV',
-          href: exportUrl,
           icon: <Download className="w-4 h-4" />,
-          external: true,
+          onClick: handleExportCsv,
         }}
       />
 
@@ -114,8 +119,11 @@ export default function InquiriesList() {
         transition={{ delay: 0.1 }}
       >
         <FilterBar
-          searchValue=""
-          onSearchChange={() => {}}
+          searchValue={q}
+          onSearchChange={(v) => {
+            setQ(v);
+            setPage(1);
+          }}
           onReset={handleReset}
           filters={
             <select
@@ -141,7 +149,7 @@ export default function InquiriesList() {
       >
         <DataTable
           columns={columns}
-          data={data?.items || []}
+          data={(data?.items || []) as Record<string, any>[]}
           loading={isLoading}
           emptyMessage={
             <div className="flex flex-col items-center gap-3 py-12">

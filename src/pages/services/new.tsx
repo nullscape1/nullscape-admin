@@ -9,8 +9,9 @@ import PageHeader from '../../components/PageHeader';
 import Link from 'next/link';
 import StatusBadge from '../../components/StatusBadge';
 import useSWR from 'swr';
+import { swrFetcher } from '../../lib/swrFetcher';
 
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
+type CategoriesResponse = { items: Array<Record<string, unknown>> };
 
 export default function NewService() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function NewService() {
     { success: 'Service created', error: 'Failed to create service' }
   );
   
-  const { data: categoriesData } = useSWR('/service-categories?status=active&limit=100', fetcher);
+  const { data: categoriesData } = useSWR<CategoriesResponse>('/service-categories?status=active&limit=100', swrFetcher);
   const categories = categoriesData?.items || [];
 
   async function onSubmit(e: React.FormEvent) {

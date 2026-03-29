@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import Cookies from 'js-cookie';
-import { getMe } from '../lib/api';
+import { getMe, logout as apiLogout } from '../lib/api';
 import { useRouter } from 'next/router';
 
 type User = { id: string; name: string; email: string; roles: string[] } | null;
@@ -34,8 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       // Only redirect if not already on login page
       if (router.pathname !== '/login') {
-        Cookies.remove('accessToken');
-        Cookies.remove('refreshToken');
+        Cookies.remove('accessToken', { path: '/' });
+        Cookies.remove('refreshToken', { path: '/' });
       }
     }
   }, [router.pathname]);
@@ -52,8 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return roles.some((r) => userRoles.includes(r));
     },
     logout: () => {
-      Cookies.remove('accessToken');
-      Cookies.remove('refreshToken');
+      apiLogout();
       setUser(null);
       window.location.replace('/login');
     },

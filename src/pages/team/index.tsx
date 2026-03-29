@@ -1,5 +1,6 @@
 import useSWR from 'swr';
 import { api } from '../../lib/api';
+import { swrFetcher } from '../../lib/swrFetcher';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import Pagination from '../../components/Pagination';
@@ -11,7 +12,13 @@ import FilterBar from '../../components/FilterBar';
 import DataTable from '../../components/DataTable';
 import StatusBadge from '../../components/StatusBadge';
 
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
+type TeamListResponse = {
+  items: Array<Record<string, unknown>>;
+  page: number;
+  pages: number;
+  total: number;
+  limit: number;
+};
 
 export default function TeamList() {
   const [q, setQ] = useState('');
@@ -28,7 +35,7 @@ export default function TeamList() {
     return `/team?${params.toString()}`;
   }, [q, status, page, limit]);
 
-  const { data, mutate, isLoading } = useSWR(key, fetcher);
+  const { data, mutate, isLoading } = useSWR<TeamListResponse>(key, swrFetcher);
 
   const handleReset = () => {
     setQ('');
@@ -54,11 +61,9 @@ export default function TeamList() {
       ),
     },
     {
-      header: 'Email',
-      accessor: 'email' as const,
-      render: (value: string) => (
-        <span className="text-sm text-muted-foreground">{value || '-'}</span>
-      ),
+      header: 'Order',
+      accessor: 'order' as const,
+      render: (value: number) => <span className="text-sm text-muted-foreground">{value ?? 0}</span>,
     },
     {
       header: 'Status',
@@ -89,6 +94,7 @@ export default function TeamList() {
       <PageHeader
         title="Team Members"
         description="Manage your team members and their roles"
+        action={{ label: 'Add member', href: '/team/new' }}
       />
 
       <motion.div
@@ -146,7 +152,7 @@ export default function TeamList() {
         />
       </motion.div>
 
-      {data && data.pages > 1 && (
+      {data != null && (data.pages ?? 1) > 1 && (
         <Pagination
           page={data.page || 1}
           pages={data.pages || 1}

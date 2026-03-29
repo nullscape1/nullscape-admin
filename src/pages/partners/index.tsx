@@ -1,5 +1,6 @@
 import useSWR from 'swr';
 import { api } from '../../lib/api';
+import { swrFetcher } from '../../lib/swrFetcher';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import Pagination from '../../components/Pagination';
@@ -11,7 +12,13 @@ import FilterBar from '../../components/FilterBar';
 import DataTable from '../../components/DataTable';
 import StatusBadge from '../../components/StatusBadge';
 
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
+type PartnersResponse = {
+  items: Array<Record<string, unknown>>;
+  page: number;
+  pages: number;
+  total: number;
+  limit: number;
+};
 
 export default function PartnersList() {
   const [q, setQ] = useState('');
@@ -28,7 +35,7 @@ export default function PartnersList() {
     return `/partners?${params.toString()}`;
   }, [q, status, page, limit]);
 
-  const { data, mutate, isLoading } = useSWR(key, fetcher);
+  const { data, mutate, isLoading } = useSWR<PartnersResponse>(key, swrFetcher);
   
   const revalidate = () => mutate();
 

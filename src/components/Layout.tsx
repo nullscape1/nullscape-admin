@@ -46,7 +46,8 @@ interface NavItem {
 const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, group: 'Main' },
   { name: 'Services', href: '/services', icon: Briefcase, group: 'Content' },
-  { name: 'CMS Pages', href: '/cms/pages', icon: FileText, group: 'Content' },
+  { name: 'Website CMS (Growth)', href: '/growth-cms/pages', icon: Sparkles, group: 'Content' },
+  { name: 'Legacy CMS', href: '/cms/pages', icon: FileText, group: 'Content' },
   { name: 'Blog', href: '/blog', icon: BookOpen, group: 'Content' },
   { name: 'Blog Categories', href: '/blog-categories', icon: Tag, group: 'Content' },
   { name: 'Portfolio', href: '/portfolio', icon: FolderKanban, group: 'Content' },
@@ -98,8 +99,8 @@ export default function Layout({ children }: { children: ReactNode }) {
   }, [theme]);
 
   function logout() {
-    Cookies.remove('accessToken');
-    Cookies.remove('refreshToken');
+    Cookies.remove('accessToken', { path: '/' });
+    Cookies.remove('refreshToken', { path: '/' });
     router.replace('/login');
   }
 

@@ -1,25 +1,31 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { api } from '../../lib/api';
+import { normalizeId } from '../../lib/utils';
 
 export default function EditCmsPage() {
   const router = useRouter();
-  const { id } = router.query as { id?: string };
+  const id = normalizeId(router.query.id);
   const [page, setPage] = useState<any>(null);
   const [sectionsText, setSectionsText] = useState<string>('[]');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
+    if (!router.isReady || !id) return;
+    setError('');
     api.get(`/cms/pages/${id}`).then((r) => {
       setPage(r.data);
       setSectionsText(JSON.stringify(r.data.sections || [], null, 2));
-    }).catch(() => setError('Failed to load'));
-  }, [id]);
+    }).catch((err: any) => setError(err?.response?.data?.message || 'Failed to load'));
+  }, [router.isReady, id]);
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
+    if (!id) {
+      setError('Page not ready. Please wait and try again.');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
@@ -39,7 +45,8 @@ export default function EditCmsPage() {
     }
   }
 
-  if (!page) return <div style={{ padding: 24 }}>Loading...</div>;
+  if (!router.isReady || (!page && !error)) return <div style={{ padding: 24 }}>Loading...</div>;
+  if (error && !page) return <div style={{ padding: 24 }}><h1>Edit CMS Page</h1><p style={{ color: 'red' }}>{error}</p></div>;
 
   return (
     <div style={{ padding: 24 }}>

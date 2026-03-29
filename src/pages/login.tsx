@@ -26,13 +26,26 @@ export default function LoginPage() {
     setError('');
     setLoginLoading(true);
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       // Refresh auth context to get user data
       await refreshUser();
       // Use replace to avoid back button issues
       router.replace('/dashboard');
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Login failed. Please check your credentials.');
+      const data = err?.response?.data;
+      const apiMsg =
+        (typeof data?.message === 'string' && data.message) ||
+        (typeof data?.error === 'string' && data.error) ||
+        (Array.isArray(data?.errors) && data.errors[0]?.message) ||
+        '';
+      const isNetworkFail =
+        err?.code === 'ECONNABORTED' ||
+        err?.code === 'ERR_NETWORK' ||
+        err?.message === 'Network Error';
+      const networkMsg = isNetworkFail
+        ? 'Cannot reach the API. In dev, requests go through Next at /api/proxy — run the backend on port 4000 (cd nullscape-backend && npm run dev) and restart the admin (npm run dev). Optional: API_PROXY_TARGET=http://127.0.0.1:4000 in nullscape-admin/.env.local if the API port differs.'
+        : '';
+      setError(apiMsg || networkMsg || err?.message || 'Login failed. Please check your credentials.');
       setLoginLoading(false);
     }
   }

@@ -1,9 +1,8 @@
 import useSWR from 'swr';
 import { api } from '../../lib/api';
+import { swrFetcher } from '../../lib/swrFetcher';
 import { useMemo, useState } from 'react';
 import Pagination from '../../components/Pagination';
-
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
 
 export default function ActivityLogs() {
   const [page, setPage] = useState(1);
@@ -13,7 +12,7 @@ export default function ActivityLogs() {
     params.set('limit', '20');
     return `/activity?${params.toString()}`;
   }, [page]);
-  const { data } = useSWR(key, fetcher);
+  const { data } = useSWR(key, swrFetcher);
   return (
     <div style={{ padding: 24 }}>
       <h1>Activity Logs</h1>

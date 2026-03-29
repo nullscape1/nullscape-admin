@@ -7,17 +7,17 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import useSWR from 'swr';
 import { api } from '../../lib/api';
-
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
+import { swrFetcher } from '../../lib/swrFetcher';
+import { normalizeId } from '../../lib/utils';
 
 export default function EditPartner() {
   const router = useRouter();
-  const { id } = router.query;
+  const id = normalizeId(router.query.id);
   const { call, loading } = useApi(
     (payload: any) => api.put(`/partners/${id}`, payload),
     { success: 'Partner updated', error: 'Failed to update partner' }
   );
-  const { data: partner, mutate } = useSWR(id ? `/partners/${id}` : null, fetcher);
+  const { data: partner, mutate } = useSWR(id ? `/partners/${id}` : null, swrFetcher);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -45,6 +45,7 @@ export default function EditPartner() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!id) return;
     try {
       await call(formData);
       mutate();

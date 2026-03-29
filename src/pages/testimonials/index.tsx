@@ -1,5 +1,6 @@
 import useSWR from 'swr';
 import { api } from '../../lib/api';
+import { swrFetcher } from '../../lib/swrFetcher';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import Pagination from '../../components/Pagination';
@@ -12,7 +13,13 @@ import DataTable from '../../components/DataTable';
 import StatusBadge from '../../components/StatusBadge';
 import { cn } from '../../lib/utils';
 
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
+type TestimonialsListResponse = {
+  items: Record<string, unknown>[];
+  page?: number;
+  pages?: number;
+  total?: number;
+  limit?: number;
+};
 
 export default function TestimonialsList() {
   const [q, setQ] = useState('');
@@ -29,7 +36,7 @@ export default function TestimonialsList() {
     return `/testimonials?${params.toString()}`;
   }, [q, status, page, limit]);
 
-  const { data, mutate, isLoading } = useSWR(key, fetcher);
+  const { data, mutate, isLoading } = useSWR<TestimonialsListResponse>(key, swrFetcher);
 
   const handleReset = () => {
     setQ('');
@@ -70,13 +77,23 @@ export default function TestimonialsList() {
       render: (value: number) => renderRating(value || 0),
     },
     {
-      header: 'Testimonial',
-      accessor: 'testimonial' as const,
+      header: 'Review',
+      accessor: 'review' as const,
       render: (value: string) => (
         <span className="text-sm text-muted-foreground line-clamp-2">
           {value || '-'}
         </span>
       ),
+    },
+    {
+      header: 'Featured',
+      accessor: 'featured' as const,
+      render: (value: boolean) =>
+        value ? (
+          <span className="text-xs font-medium rounded-full bg-primary/15 text-primary px-2 py-0.5">Yes</span>
+        ) : (
+          <span className="text-muted-foreground text-sm">—</span>
+        ),
     },
     {
       header: 'Status',
@@ -107,6 +124,7 @@ export default function TestimonialsList() {
       <PageHeader
         title="Testimonials"
         description="Manage client testimonials and reviews"
+        action={{ label: 'Add testimonial', href: '/testimonials/new' }}
       />
 
       <motion.div
@@ -164,7 +182,7 @@ export default function TestimonialsList() {
         />
       </motion.div>
 
-      {data && data.pages > 1 && (
+      {data != null && (data.pages ?? 1) > 1 && (
         <Pagination
           page={data.page || 1}
           pages={data.pages || 1}

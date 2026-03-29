@@ -1,15 +1,14 @@
 import useSWR from 'swr';
 import { api } from '../../lib/api';
+import { swrFetcher } from '../../lib/swrFetcher';
 import Link from 'next/link';
 import { FileText, Edit, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PageHeader from '../../components/PageHeader';
 import DataTable from '../../components/DataTable';
 
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
-
 export default function CmsPages() {
-  const { data, mutate, isLoading } = useSWR('/cms/pages', fetcher);
+  const { data, mutate, isLoading } = useSWR('/cms/pages', swrFetcher);
 
   const columns = [
     {

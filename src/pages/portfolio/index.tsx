@@ -1,42 +1,28 @@
-import useSWR from 'swr';
-import { api } from '../../lib/api';
+import { useListCrud } from '../../hooks/useListCrud';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
-import Pagination from '../../components/Pagination';
-import { addToast } from '../../lib/toast';
 import { FolderKanban, Edit } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PageHeader from '../../components/PageHeader';
 import FilterBar from '../../components/FilterBar';
 import DataTable from '../../components/DataTable';
+import Pagination from '../../components/Pagination';
 import StatusBadge from '../../components/StatusBadge';
 
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
-
 export default function PortfolioList() {
-  const [q, setQ] = useState('');
-  const [status, setStatus] = useState<string>('');
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-
-  const key = useMemo(() => {
-    const params = new URLSearchParams();
-    if (q) params.set('q', q);
-    if (status) params.set('status', status);
-    params.set('page', String(page));
-    params.set('limit', String(limit));
-    return `/portfolio?${params.toString()}`;
-  }, [q, status, page, limit]);
-
-  const { data, mutate, isLoading } = useSWR(key, fetcher);
-
-  const handleReset = () => {
-    setQ('');
-    setStatus('');
-    setPage(1);
-    mutate();
-    addToast('Filters cleared', 'success', 1500);
-  };
+  const {
+    data,
+    mutate,
+    isLoading,
+    q,
+    setQ,
+    status,
+    setStatus,
+    page,
+    setPage,
+    limit,
+    setLimit,
+    handleReset,
+  } = useListCrud('/portfolio');
 
   const columns = [
     {
@@ -95,8 +81,8 @@ export default function PortfolioList() {
       >
         <FilterBar
           searchValue={q}
-          onSearchChange={(value) => {
-            setQ(value);
+          onSearchChange={(v) => {
+            setQ(v);
             setPage(1);
           }}
           onReset={handleReset}
@@ -124,7 +110,7 @@ export default function PortfolioList() {
       >
         <DataTable
           columns={columns}
-          data={data?.items || []}
+          data={(data?.items || []) as Record<string, any>[]}
           loading={isLoading}
           emptyMessage={
             <div className="flex flex-col items-center gap-3 py-12">

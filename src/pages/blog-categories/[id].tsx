@@ -6,13 +6,13 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import useSWR from 'swr';
 import { api } from '../../lib/api';
-
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
+import { swrFetcher } from '../../lib/swrFetcher';
+import { normalizeId } from '../../lib/utils';
 
 export default function EditBlogCategory() {
   const router = useRouter();
-  const { id } = router.query;
-  const { data: category, mutate } = useSWR(id ? `/blog-categories/${id}` : null, fetcher);
+  const id = normalizeId(router.query.id);
+  const { data: category, mutate } = useSWR(id ? `/blog-categories/${id}` : null, swrFetcher);
   
   const [formData, setFormData] = useState({
     name: '',

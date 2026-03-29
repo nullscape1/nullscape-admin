@@ -32,7 +32,8 @@ export default function SeoSettingsPage() {
     setLoading(true);
     try {
       if (item?._id) {
-        await api.put(`/cms/seo/${item._id}`, { ...item, robotsTxt });
+        const { _id, __v, createdAt, updatedAt, ...rest } = item;
+        await api.put(`/cms/seo/${item._id}`, { ...rest, robotsTxt });
       } else {
         const { data } = await api.post('/cms/seo', { robotsTxt });
         setItem(data);

@@ -1,21 +1,22 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
+import { swrFetcher } from '../../lib/swrFetcher';
 import { useRouter } from 'next/router';
 import useSWR from 'swr';
-
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
 
 export default function NewProject() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
+  const [screenshotUrl, setScreenshotUrl] = useState('');
+  const [techStackInput, setTechStackInput] = useState('');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
   // Load categories from API
-  const { data: categoriesData } = useSWR('/portfolio-categories?status=active&limit=100', fetcher);
+  const { data: categoriesData } = useSWR('/portfolio-categories?status=active&limit=100', swrFetcher);
   const categories = categoriesData?.items || [];
 
   useEffect(() => {
@@ -29,7 +30,20 @@ export default function NewProject() {
     setError('');
     setLoading(true);
     try {
-      await api.post('/portfolio', { name, category, solution: description, status });
+      const techStack = techStackInput
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const screenshots = screenshotUrl.trim() ? [screenshotUrl.trim()] : [];
+      await api.post('/portfolio', {
+        name,
+        category,
+        description,
+        solution: description,
+        status,
+        ...(screenshots.length ? { screenshots } : {}),
+        ...(techStack.length ? { techStack } : {}),
+      });
       router.push('/portfolio');
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Failed to create');
@@ -63,6 +77,29 @@ export default function NewProject() {
         <div style={{ marginTop: 12 }}>
           <label>Description</label>
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={6} style={{ width: '100%' }} />
+          <p style={{ marginTop: 6, fontSize: 13, color: '#666' }}>
+            Plain text or HTML is stored as-is. The public site shows a short plain-text preview on cards.
+          </p>
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <label>Cover image URL (optional)</label>
+          <input
+            value={screenshotUrl}
+            onChange={(e) => setScreenshotUrl(e.target.value)}
+            placeholder="https://…"
+            type="url"
+            style={{ width: '100%' }}
+          />
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <label>Tech stack (optional)</label>
+          <input
+            value={techStackInput}
+            onChange={(e) => setTechStackInput(e.target.value)}
+            placeholder="React, Node.js, PostgreSQL"
+            style={{ width: '100%' }}
+          />
+          <p style={{ marginTop: 6, fontSize: 13, color: '#666' }}>Comma-separated tags shown on the website.</p>
         </div>
         <div style={{ marginTop: 12 }}>
           <label>Status</label>

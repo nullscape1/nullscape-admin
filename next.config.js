@@ -3,6 +3,18 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 const nextConfig = {
   reactStrictMode: true,
+
+  // API proxy is implemented in src/pages/api/proxy/[...path].ts (works in dev and next start).
+
+  // Use polling for file watching to avoid EMFILE errors on macOS
+  webpackDevMiddleware: (config) => {
+    config.watchOptions = {
+      poll: 1000, // Check for changes every second
+      aggregateTimeout: 300, // Delay before rebuilding
+      ignored: /node_modules/,
+    };
+    return config;
+  },
   
   // Production optimizations
   swcMinify: true,

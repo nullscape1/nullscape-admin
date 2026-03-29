@@ -1,38 +1,45 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { api } from '../../lib/api';
+import { swrFetcher } from '../../lib/swrFetcher';
+import { normalizeId, cleanPayload, getApiErrorMessage } from '../../lib/utils';
 import useSWR from 'swr';
-
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
 
 export default function EditService() {
   const router = useRouter();
-  const { id } = router.query as { id?: string };
+  const id = normalizeId(router.query.id);
   const [service, setService] = useState<any>(null);
   const [error, setError] = useState('');
 
-  const { data: categoriesData } = useSWR('/service-categories?status=active&limit=100', fetcher);
+  const { data: categoriesData } = useSWR<{ items: unknown[] }>('/service-categories?status=active&limit=100', swrFetcher);
   const categories = categoriesData?.items || [];
 
   useEffect(() => {
-    if (!id) return;
-    api.get(`/services/${id}`).then((r) => setService(r.data)).catch(() => setError('Failed to load'));
-  }, [id]);
+    if (!router.isReady || !id) return;
+    setError('');
+    api.get(`/services/${id}`).then((r) => setService(r.data)).catch((err: unknown) => setError(getApiErrorMessage(err, 'Failed to load')));
+  }, [router.isReady, id]);
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
+    if (!id) {
+      setError('Page not ready. Please wait and try again.');
+      return;
+    }
+    setError('');
     try {
-      await api.put(`/services/${id}`, { 
-        name: service.name, 
-        description: service.description, 
-        icon: service.icon || '',
-        category: service.category || '',
-        order: service.order || 0,
-        status: service.status 
+      const payload = cleanPayload({
+        name: service.name?.trim() || undefined,
+        description: service.description || undefined,
+        icon: service.icon || undefined,
+        category: service.category || undefined,
+        order: Number(service.order) || 0,
+        status: service.status || undefined,
       });
+      await api.put(`/services/${id}`, payload);
       router.push('/services');
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to save');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Failed to save'));
     }
   }
 
@@ -42,7 +49,8 @@ export default function EditService() {
     router.push('/services');
   }
 
-  if (!service) return <div style={{ padding: 24 }}>Loading...</div>;
+  if (!router.isReady || (!service && !error)) return <div style={{ padding: 24 }}>Loading...</div>;
+  if (error && !service) return <div style={{ padding: 24 }}><h1>Edit Service</h1><p style={{ color: 'red' }}>{error}</p></div>;
 
   return (
     <div style={{ padding: 24 }}>

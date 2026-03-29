@@ -10,9 +10,8 @@ import PageHeader from '../../components/PageHeader';
 import FilterBar from '../../components/FilterBar';
 import DataTable from '../../components/DataTable';
 import StatusBadge from '../../components/StatusBadge';
+import { swrFetcher } from '../../lib/swrFetcher';
 import { useApi } from '../../lib/useApi';
-
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
 
 export default function PricingPlansList() {
   const [q, setQ] = useState('');
@@ -33,7 +32,7 @@ export default function PricingPlansList() {
     return `/pricing?${params.toString()}`;
   }, [q, status, page, limit]);
 
-  const { data, mutate, isLoading } = useSWR(key, fetcher);
+  const { data, mutate, isLoading } = useSWR(key, swrFetcher);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this pricing plan?')) return;

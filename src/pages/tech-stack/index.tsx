@@ -1,5 +1,6 @@
 import useSWR from 'swr';
 import { api } from '../../lib/api';
+import { swrFetcher } from '../../lib/swrFetcher';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import Pagination from '../../components/Pagination';
@@ -10,8 +11,6 @@ import PageHeader from '../../components/PageHeader';
 import FilterBar from '../../components/FilterBar';
 import DataTable from '../../components/DataTable';
 import StatusBadge from '../../components/StatusBadge';
-
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
 
 export default function TechStackList() {
   const [q, setQ] = useState('');
@@ -30,7 +29,7 @@ export default function TechStackList() {
     return `/tech-stack?${params.toString()}`;
   }, [q, status, category, page, limit]);
 
-  const { data, mutate, isLoading } = useSWR(key, fetcher);
+  const { data, mutate, isLoading } = useSWR(key, swrFetcher);
   
   const revalidate = () => mutate();
 

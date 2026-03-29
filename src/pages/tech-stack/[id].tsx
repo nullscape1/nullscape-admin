@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { api } from '../../lib/api';
+import { swrFetcher } from '../../lib/swrFetcher';
+import { normalizeId } from '../../lib/utils';
 import { addToast } from '../../lib/toast';
 import PageHeader from '../../components/PageHeader';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import useSWR from 'swr';
 
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
-
 export default function EditTechStack() {
   const router = useRouter();
-  const { id } = router.query;
+  const id = normalizeId(router.query.id);
   const [loading, setLoading] = useState(false);
-  const { data: tech, mutate } = useSWR(id ? `/tech-stack/${id}` : null, fetcher);
+  const { data: tech, mutate } = useSWR(id ? `/tech-stack/${id}` : null, swrFetcher);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -39,6 +39,7 @@ export default function EditTechStack() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!id) return;
     setLoading(true);
     try {
       await api.put(`/tech-stack/${id}`, formData);

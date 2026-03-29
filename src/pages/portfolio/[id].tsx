@@ -1,36 +1,66 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { api } from '../../lib/api';
+import { swrFetcher } from '../../lib/swrFetcher';
+import { normalizeId, getApiErrorMessage } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
 import useSWR from 'swr';
 
-const fetcher = (url: string) => api.get(url).then((r) => r.data);
-
 export default function EditProject() {
   const router = useRouter();
-  const { id } = router.query as { id?: string };
+  const id = normalizeId(router.query.id);
   const [project, setProject] = useState<any>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { hasRole } = useAuth();
   
   // Load categories from API
-  const { data: categoriesData } = useSWR('/portfolio-categories?status=active&limit=100', fetcher);
+  const { data: categoriesData } = useSWR<{ items: unknown[] }>('/portfolio-categories?status=active&limit=100', swrFetcher);
   const categories = categoriesData?.items || [];
 
   useEffect(() => {
-    if (!id) return;
-    api.get(`/portfolio/${id}`).then((r) => setProject(r.data)).catch(() => setError('Failed to load'));
-  }, [id]);
+    if (!router.isReady || !id) return;
+    setError('');
+    api
+      .get(`/portfolio/${id}`)
+      .then((r) => {
+        const d = r.data;
+        const screenshotUrl = Array.isArray(d.screenshots) && d.screenshots[0] ? String(d.screenshots[0]) : '';
+        const techStackInput = Array.isArray(d.techStack) ? d.techStack.join(', ') : '';
+        setProject({ ...d, screenshotUrl, techStackInput });
+      })
+      .catch((err: unknown) => setError(getApiErrorMessage(err, 'Failed to load')));
+  }, [router.isReady, id]);
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
+    if (!id) {
+      setError('Page not ready. Please wait and try again.');
+      return;
+    }
     setLoading(true);
+    setError('');
     try {
-      await api.put(`/portfolio/${id}`, { name: project.name, category: project.category, solution: project.solution, status: project.status });
+      const body = project.description ?? project.solution ?? '';
+      const techRaw = typeof project.techStackInput === 'string' ? project.techStackInput : '';
+      const techStack = techRaw
+        .split(',')
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+      const shot = (project.screenshotUrl || '').trim();
+      const screenshots = shot ? [shot] : [];
+      await api.put(`/portfolio/${id}`, {
+        name: project.name,
+        category: project.category,
+        description: body,
+        solution: body,
+        status: project.status,
+        screenshots,
+        techStack,
+      });
       router.push('/portfolio');
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to save');
+      setError(getApiErrorMessage(err, 'Failed to save'));
     } finally {
       setLoading(false);
     }
@@ -42,7 +72,8 @@ export default function EditProject() {
     router.push('/portfolio');
   }
 
-  if (!project) return <div style={{ padding: 24 }}>Loading...</div>;
+  if (!router.isReady || (!project && !error)) return <div style={{ padding: 24 }}>Loading...</div>;
+  if (error && !project) return <div style={{ padding: 24 }}><h1>Edit Project</h1><p style={{ color: 'red' }}>{error}</p></div>;
 
   return (
     <div style={{ padding: 24 }}>
@@ -69,7 +100,36 @@ export default function EditProject() {
         </div>
         <div style={{ marginTop: 12 }}>
           <label>Description</label>
-          <textarea value={project.solution || ''} onChange={(e) => setProject({ ...project, solution: e.target.value })} rows={6} style={{ width: '100%' }} />
+          <textarea
+            value={project.description ?? project.solution ?? ''}
+            onChange={(e) =>
+              setProject({ ...project, description: e.target.value, solution: e.target.value })
+            }
+            rows={6}
+            style={{ width: '100%' }}
+          />
+          <p style={{ marginTop: 6, fontSize: 13, color: '#666' }}>
+            Plain text or HTML. The website shows a short plain-text preview on cards.
+          </p>
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <label>Cover image URL (optional)</label>
+          <input
+            value={project.screenshotUrl || ''}
+            onChange={(e) => setProject({ ...project, screenshotUrl: e.target.value })}
+            placeholder="https://…"
+            type="url"
+            style={{ width: '100%' }}
+          />
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <label>Tech stack (optional)</label>
+          <input
+            value={project.techStackInput || ''}
+            onChange={(e) => setProject({ ...project, techStackInput: e.target.value })}
+            placeholder="React, Node.js"
+            style={{ width: '100%' }}
+          />
         </div>
         <div style={{ marginTop: 12 }}>
           <label>Status</label>
