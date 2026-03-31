@@ -4,6 +4,24 @@ import { swrFetcher } from '../../lib/swrFetcher';
 import { useMemo, useState } from 'react';
 import Pagination from '../../components/Pagination';
 
+type ActivityLogItem = {
+  _id: string;
+  createdAt: string;
+  action?: string;
+  entity?: string;
+  entityId?: string;
+  user?: { email?: string } | null;
+  meta?: unknown;
+};
+
+type ActivityResponse = {
+  items: ActivityLogItem[];
+  page: number;
+  pages: number;
+  limit?: number;
+  total?: number;
+};
+
 export default function ActivityLogs() {
   const [page, setPage] = useState(1);
   const key = useMemo(() => {
@@ -12,7 +30,7 @@ export default function ActivityLogs() {
     params.set('limit', '20');
     return `/activity?${params.toString()}`;
   }, [page]);
-  const { data } = useSWR(key, swrFetcher);
+  const { data } = useSWR<ActivityResponse>(key, swrFetcher);
   return (
     <div style={{ padding: 24 }}>
       <h1>Activity Logs</h1>
