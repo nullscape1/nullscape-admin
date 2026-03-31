@@ -25,6 +25,11 @@ function getBackendBase(): string {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Prevent Vercel / browser caching of proxied API responses.
+  // This ensures admin UI reflects backend changes immediately.
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Pragma', 'no-cache');
+
   const segments = req.query.path;
   const pathParts = Array.isArray(segments) ? segments : segments ? [segments] : [];
   const joined = pathParts.join('/');
